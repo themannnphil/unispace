@@ -18,7 +18,7 @@ A comprehensive university facility booking system built with MVC architecture u
 - **Express.js** - Web framework 
 - **PostgreSQL** - Database 
 - **Express Validator** - Input validation
-- **Moment.js** - Date/time handling 
+- **Moment.js** - Date/time handling  
 
 ### Frontend
 - **HTML5/CSS3/JavaScript** - Core technologies
