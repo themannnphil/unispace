@@ -9,13 +9,13 @@ A comprehensive university facility booking system built with MVC architecture u
 - **Availability Check**: Real-time availability checking with 30-minute time slots
 - **User Management**: User roles and booking history
 - **Modern UI**: Responsive web interface with Bootstrap
-- **RESTful API**: Complete API with validation and error handling
+- **RESTful API**:  Complete API with validation and error handling
 
 ## Technology Stack
 
 ### Backend
 - **Node.js** - Runtime environment 
-- **Express.js** - Web framework
+- **Express.js** - Web framework 
 - **PostgreSQL** - Database
 - **Express Validator** - Input validation
 - **Moment.js** - Date/time handling
