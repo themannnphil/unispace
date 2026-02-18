@@ -16,7 +16,7 @@ A comprehensive university facility booking system built with MVC architecture u
 ### Backend
 - **Node.js** - Runtime environment 
 - **Express.js** - Web framework 
-- **PostgreSQL** - Database
+- **PostgreSQL** - Database 
 - **Express Validator** - Input validation
 - **Moment.js** - Date/time handling
 
