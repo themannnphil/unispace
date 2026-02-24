@@ -4,10 +4,16 @@
 
 UniSpace is a RESTful API for managing university facility bookings. This API provides endpoints for facilities, bookings, and user management with full CRUD operations, validation, and error handling.
 
+**Base URL**: `https://unispace.onrender.com/api`
+**API Version**: 1.0.0
+**Content-Type**: `application/json`
+
 ## Authentication
-Currently, the API uses basic user identification. In production, implement proper JWT-based authentication.
+
+Currently, the API uses basic user identification. Users are created/validated through the `/api/users/authenticate` endpoint. In production, implement proper JWT-based authentication.
 
 ## Response Format
+
 All responses follow this format:
 
 ### Success Response
@@ -29,12 +35,644 @@ All responses follow this format:
 ```
 
 ## HTTP Status Codes
-- `200` - OK
-- `201` - Created
-- `400` - Bad Request (Validation errors)
-- `404` - Not Found
-- `409` - Conflict (Booking conflicts)
-- `500` - Internal Server Error
+
+- `200` - OK: Request successful
+- `201` - Created: Resource created successfully
+- `400` - Bad Request: Invalid input data
+- `404` - Not Found: Resource not found
+- `409` - Conflict: Resource conflict (e.g., booking overlap)
+- `500` - Internal Server Error: Server error
+
+---
+
+## Endpoints
+
+### Users
+
+#### Authenticate User
+**POST** `/users/authenticate`
+
+Authenticates a user or creates a new account if user doesn't exist.
+
+**Request Body:**
+```json
+{
+  "email": "user@university.edu",
+  "password": "any-password",
+  "role": "user" // or "admin"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "user",
+    "email": "user@university.edu",
+    "role": "user",
+    "created_at": "2024-02-18T03:35:26.789Z"
+  },
+  "message": "Authentication successful"
+}
+```
+
+#### Get All Users (Admin Only)
+**GET** `/users`
+
+Returns all users in the system.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@university.edu",
+      "role": "user",
+      "created_at": "2024-02-18T03:35:26.789Z"
+    }
+  ]
+}
+```
+
+---
+
+### Facilities
+
+#### Get All Facilities
+**GET** `/facilities`
+
+Returns all available facilities.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "Computer Lab 101",
+      "location": "Building A, Floor 1",
+      "capacity": 30,
+      "created_at": "2024-02-18T03:35:26.789Z"
+    }
+  ]
+}
+```
+
+#### Get Specific Facility
+**GET** `/facilities/{id}`
+
+Returns details of a specific facility.
+
+**Path Parameters:**
+- `id` (integer): Facility ID
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "Computer Lab 101",
+    "location": "Building A, Floor 1",
+    "capacity": 30,
+    "created_at": "2024-02-18T03:35:26.789Z"
+  }
+}
+```
+
+#### Create Facility (Admin Only)
+**POST** `/facilities`
+
+Creates a new facility.
+
+**Request Body:**
+```json
+{
+  "name": "Study Room 202",
+  "location": "Library, Floor 2",
+  "capacity": 15
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 2,
+    "name": "Study Room 202",
+    "location": "Library, Floor 2",
+    "capacity": 15,
+    "created_at": "2024-02-18T03:35:26.789Z"
+  },
+  "message": "Facility created successfully"
+}
+```
+
+#### Update Facility (Admin Only)
+**PUT** `/facilities/{id}`
+
+Updates an existing facility.
+
+**Path Parameters:**
+- `id` (integer): Facility ID
+
+**Request Body:**
+```json
+{
+  "name": "Updated Lab Name",
+  "location": "New Location",
+  "capacity": 25
+}
+```
+
+#### Delete Facility (Admin Only)
+**DELETE** `/facilities/{id}`
+
+Deletes a facility and all associated bookings.
+
+**Path Parameters:**
+- `id` (integer): Facility ID
+
+---
+
+### Bookings
+
+#### Get All Bookings (Admin Only)
+**GET** `/bookings`
+
+Returns all bookings with user and facility details.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "facility_id": 1,
+      "user_id": 1,
+      "date": "2024-02-20",
+      "start_time": "09:00",
+      "end_time": "10:30",
+      "status": "confirmed",
+      "facility_name": "Computer Lab 101",
+      "user_name": "John Doe",
+      "user_email": "john@university.edu",
+      "created_at": "2024-02-18T03:35:26.789Z"
+    }
+  ]
+}
+```
+
+#### Get User Bookings
+**GET** `/bookings/user/{userId}`
+
+Returns bookings for a specific user.
+
+**Path Parameters:**
+- `userId` (integer): User ID
+
+#### Create Booking
+**POST** `/bookings`
+
+Creates a new booking.
+
+**Request Body:**
+```json
+{
+  "facility_id": 1,
+  "user_id": 1,
+  "date": "2024-02-20",
+  "start_time": "09:00",
+  "end_time": "10:30",
+  "status": "confirmed"
+}
+```
+
+**Validation Rules:**
+- `facility_id`: Must be a positive integer
+- `user_id`: Must be a positive integer
+- `date`: Must be a valid ISO date
+- `start_time`: Must be in HH:MM format
+- `end_time`: Must be in HH:MM format
+- `status`: Must be 'confirmed', 'cancelled', or 'pending'
+
+#### Update Booking
+**PUT** `/bookings/{id}`
+
+Updates an existing booking.
+
+**Path Parameters:**
+- `id` (integer): Booking ID
+
+**Request Body:**
+```json
+{
+  "facility_id": 1,
+  "user_id": 1,
+  "date": "2024-02-20",
+  "start_time": "09:00",
+  "end_time": "11:00",
+  "status": "confirmed"
+}
+```
+
+#### Delete Booking
+**DELETE** `/bookings/{id}`
+
+Cancels a booking.
+
+**Path Parameters:**
+- `id` (integer): Booking ID
+
+#### Check Availability
+**GET** `/bookings/availability/check`
+
+Checks availability for a specific facility and date.
+
+**Query Parameters:**
+- `facility_id` (integer): Facility ID
+- `date` (string): Date in YYYY-MM-DD format
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "facility_id": 1,
+    "date": "2024-02-20",
+    "available_slots": [
+      {"start_time": "08:00", "end_time": "08:30"},
+      {"start_time": "08:30", "end_time": "09:00"}
+    ],
+    "booked_slots": [
+      {"start_time": "09:00", "end_time": "10:30", "user_name": "John Doe"}
+    ]
+  }
+}
+```
+
+---
+
+## System Information
+
+#### Health Check
+**GET** `/health`
+
+Returns system health status.
+
+**Response:**
+```json
+{
+  "status": "OK",
+  "timestamp": "2024-02-18T03:35:26.789Z",
+  "uptime": 3600
+}
+```
+
+#### API Information
+**GET** `/`
+
+Returns API information and available endpoints.
+
+**Response:**
+```json
+{
+  "message": "UniSpace API - University Facility Booking System",
+  "version": "1.0.0",
+  "endpoints": {
+    "facilities": "/api/facilities",
+    "bookings": "/api/bookings",
+    "users": "/api/users"
+  }
+}
+```
+
+---
+
+## Error Handling
+
+### Validation Errors
+```json
+{
+  "success": false,
+  "message": "Validation errors",
+  "errors": [
+    {
+      "field": "email",
+      "message": "Valid email is required"
+    }
+  ]
+}
+```
+
+### Booking Conflicts
+```json
+{
+  "success": false,
+  "message": "Booking conflict: Facility is already booked for this time slot"
+}
+```
+
+### Not Found
+```json
+{
+  "success": false,
+  "message": "Facility not found"
+}
+```
+
+---
+
+## Rate Limiting
+
+Current implementation doesn't include rate limiting. In production, implement:
+- 100 requests per minute per IP
+- 1000 requests per hour per user
+
+## Security Considerations
+
+1. **Authentication**: Implement JWT-based authentication
+2. **Authorization**: Add role-based access control
+3. **Input Validation**: All inputs are validated using express-validator
+4. **SQL Injection**: Protected through parameterized queries
+5. **CORS**: Configured for cross-origin requests
+
+## Testing
+
+Use the provided Postman collection in `/tests/postman-collection.json` to test all endpoints.
+
+---
+
+## MVC Implementation
+
+This API follows the Model-View-Controller (MVC) pattern:
+
+- **Models**: `/models/` - Database interaction layer
+- **Controllers**: `/controllers/` - Business logic layer
+- **Routes**: `/routes/` - Request routing layer
+- **Views**: API responses serve as "views" in this REST API
+
+Each controller handles specific entity operations, models manage database interactions, and routes define API endpoints.
+
+### Create Booking
+**POST** `/bookings`
+
+Creates a new booking.
+
+**Request Body:**
+```json
+{
+  "facility_id": 1,
+  "user_id": 1,
+  "date": "2024-02-20",
+  "start_time": "09:00",
+  "end_time": "10:30",
+  "status": "confirmed"
+}
+```
+
+**Validation Rules:**
+- `facility_id`: Must be a positive integer
+- `user_id`: Must be a positive integer
+- `date`: Must be a valid ISO date
+- `start_time`: Must be in HH:MM format
+- `end_time`: Must be in HH:MM format
+- `status`: Must be 'confirmed', 'cancelled', or 'pending'
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "facility_id": 1,
+    "user_id": 1,
+    "date": "2024-02-20",
+    "start_time": "09:00",
+    "end_time": "10:30",
+    "status": "confirmed",
+    "created_at": "2024-02-18T03:35:26.789Z"
+  },
+  "message": "Booking created successfully"
+}
+```
+
+### Get All Bookings
+**GET** `/bookings`
+
+Returns all bookings with user and facility details.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "facility_id": 1,
+      "user_id": 1,
+      "date": "2024-02-20",
+      "start_time": "09:00",
+      "end_time": "10:30",
+      "status": "confirmed",
+      "facility_name": "Computer Lab 101",
+      "user_name": "John Doe",
+      "user_email": "john@university.edu",
+      "created_at": "2024-02-18T03:35:26.789Z"
+    }
+  ]
+}
+```
+
+### Get Booking by ID
+**GET** `/bookings/{id}`
+
+Returns a specific booking by its ID.
+
+**Path Parameters:**
+- `id` (integer): Booking ID
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "facility_id": 1,
+    "user_id": 1,
+    "date": "2024-02-20",
+    "start_time": "09:00",
+    "end_time": "10:30",
+    "status": "confirmed",
+    "facility_name": "Computer Lab 101",
+    "user_name": "John Doe",
+    "user_email": "john@university.edu",
+    "created_at": "2024-02-18T03:35:26.789Z"
+  }
+}
+```
+
+### Update Booking
+**PUT** `/bookings/{id}`
+
+Updates an existing booking.
+
+**Path Parameters:**
+- `id` (integer): Booking ID
+
+**Request Body:**
+```json
+{
+  "facility_id": 1,
+  "user_id": 1,
+  "date": "2024-02-20",
+  "start_time": "09:00",
+  "end_time": "11:00",
+  "status": "confirmed"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "facility_id": 1,
+    "user_id": 1,
+    "date": "2024-02-20",
+    "start_time": "09:00",
+    "end_time": "11:00",
+    "status": "confirmed",
+    "created_at": "2024-02-18T03:35:26.789Z"
+  },
+  "message": "Booking updated successfully"
+}
+```
+
+### Delete Booking
+**DELETE** `/bookings/{id}`
+
+Cancels a booking.
+
+**Path Parameters:**
+- `id` (integer): Booking ID
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "facility_id": 1,
+    "user_id": 1,
+    "date": "2024-02-20",
+    "start_time": "09:00",
+    "end_time": "10:30",
+    "status": "cancelled",
+    "created_at": "2024-02-18T03:35:26.789Z"
+  },
+  "message": "Booking cancelled successfully"
+}
+```
+
+### Check Availability
+**GET** `/bookings/availability/check`
+
+Checks availability for a specific facility and date.
+
+**Query Parameters:**
+- `facility_id` (integer): Facility ID
+- `date` (string): Date in YYYY-MM-DD format
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "facility_id": 1,
+    "date": "2024-02-20",
+    "available_slots": [
+      {"start_time": "08:00", "end_time": "08:30"},
+      {"start_time": "08:30", "end_time": "09:00"}
+    ],
+    "booked_slots": [
+      {"start_time": "09:00", "end_time": "10:30", "user_name": "John Doe"}
+    ]
+  }
+}
+```
+
+### Get User Bookings
+**GET** `/bookings/user/{userId}`
+
+Returns bookings for a specific user.
+
+**Path Parameters:**
+- `userId` (integer): User ID
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "facility_id": 1,
+      "date": "2024-02-20",
+      "start_time": "09:00",
+      "end_time": "10:30",
+      "status": "confirmed",
+      "facility_name": "Computer Lab 101",
+      "created_at": "2024-02-18T03:35:26.789Z"
+    }
+  ]
+}
+```
+
+---
+
+## System Endpoints
+
+### Health Check
+**GET** `/health`
+
+Checks system health and status.
+
+**Response:**
+```json
+{
+  "status": "OK",
+  "timestamp": "2024-02-20T10:00:00.000Z",
+  "uptime": 3600.123
+}
+```
+
+### API Information
+**GET** `/`
+
+Returns basic API information and available endpoints.
+
+**Response:**
+```json
+{
+  "message": "UniSpace API - University Facility Booking System",
+  "version": "1.0.0",
+  "endpoints": {
+    "facilities": "/api/facilities",
+    "bookings": "/api/bookings",
+    "users": "/api/users"
+  }
+}
+```
 
 ---
 
