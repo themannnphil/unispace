@@ -4,7 +4,7 @@ let currentFacility = null;
 let selectedTimeSlot = null;
 let currentUser = null;
 
-// Initialize the application
+// Initialize application
 document.addEventListener('DOMContentLoaded', function() {
     // Check if user is already logged in
     const savedUser = localStorage.getItem('currentUser');
@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup login form
     document.getElementById('login-form').addEventListener('submit', handleLogin);
+    
+    // Setup register form
+    document.getElementById('register-form').addEventListener('submit', handleRegister);
     
     // Setup facility form
     document.getElementById('facility-form').addEventListener('submit', handleAddFacility);
@@ -37,15 +40,14 @@ async function handleLogin(e) {
     const isAdmin = document.getElementById('admin-login').checked;
     
     try {
-        const response = await fetch(`${API_BASE}/users/authenticate`, {
+        const response = await fetch(`${API_BASE}/users/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
                 email: email,
-                password: password, // Still accepts any password for demo
-                role: isAdmin ? 'admin' : 'user'
+                password: password
             })
         });
         
@@ -61,6 +63,45 @@ async function handleLogin(e) {
         }
     } catch (error) {
         showAlert('Network error during login', 'danger');
+        console.error('Error:', error);
+    }
+}
+
+// Handle registration
+async function handleRegister(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('register-name').value;
+    const email = document.getElementById('register-email').value;
+    const password = document.getElementById('register-password').value;
+    const isAdmin = document.getElementById('admin-register').checked;
+    
+    try {
+        const response = await fetch(`${API_BASE}/users/register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: name,
+                email: email,
+                password: password,
+                role: isAdmin ? 'admin' : 'user'
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            currentUser = result.data;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            showMainApp();
+            showAlert('Account created and logged in successfully!', 'success');
+        } else {
+            showAlert(result.message || 'Registration failed', 'danger');
+        }
+    } catch (error) {
+        showAlert('Network error during registration', 'danger');
         console.error('Error:', error);
     }
 }

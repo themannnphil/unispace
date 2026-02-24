@@ -1,22 +1,25 @@
 const express = require('express');
 const router = express.Router();
+const AuthController = require('../controllers/authController');
 const UserController = require('../controllers/userController');
 const { body } = require('express-validator');
 
-// POST /users/authenticate - Authenticate or create user
-router.post('/authenticate', [
+// Authentication routes (MUST come before /:id)
+router.post('/register', [
+    body('name').notEmpty().withMessage('Name is required'),
     body('email').isEmail().withMessage('Valid email is required'),
-    body('password').notEmpty().withMessage('Password is required'),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
     body('role').optional().isIn(['user', 'admin']).withMessage('Role must be user or admin')
-], UserController.authenticateUser);
+], AuthController.register);
 
-// GET /users - Get all users (admin only)
+router.post('/login', [
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('password').notEmpty().withMessage('Password is required')
+], AuthController.login);
+
+// User management routes (admin only)
 router.get('/', UserController.getAllUsers);
-
-// GET /users/:id - Get specific user
 router.get('/:id', UserController.getUserById);
-
-// POST /users - Create new user (admin only)
 router.post('/', [
     body('name').notEmpty().withMessage('Name is required'),
     body('email').isEmail().withMessage('Valid email is required'),

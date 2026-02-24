@@ -25,6 +25,25 @@ class User {
         return result.rows[0];
     }
 
+    static async createWithPassword(userData) {
+        const { name, email, role = 'user', password } = userData;
+        
+        const result = await pool.query(`
+            INSERT INTO users (name, email, role, password) 
+            VALUES ($1, $2, $3, $4) 
+            RETURNING id, name, email, role
+        `, [name, email, role, password]);
+        
+        return result.rows[0];
+    }
+
+    static async getByEmailWithPassword(email) {
+        const result = await pool.query(`
+            SELECT * FROM users WHERE email = $1
+        `, [email]);
+        return result.rows[0];
+    }
+
     static async update(id, userData) {
         const { name, email, role } = userData;
         const result = await pool.query(
