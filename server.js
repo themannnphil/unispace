@@ -57,6 +57,25 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Database setup endpoint for Render
+app.post('/api/setup', async (req, res) => {
+    try {
+        const cleanSetupDatabase = require('./database/clean-setup');
+        await cleanSetupDatabase();
+        res.json({
+            success: true,
+            message: 'Database setup completed successfully on Render'
+        });
+    } catch (error) {
+        console.error('Database setup failed:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Database setup failed',
+            error: error.message
+        });
+    }
+});
+
 // 404 handler
 app.use('*', (req, res) => {
     res.status(404).json({
