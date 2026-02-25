@@ -25,7 +25,7 @@ class Booking {
     }
 
     static async create(bookingData) {
-        const { facility_id, user_id, date, start_time, end_time, status = 'confirmed' } = bookingData;
+        const { facility_id, user_id, date, start_time, end_time, status = 'pending' } = bookingData;
         
         // Check for booking conflicts
         const conflictCheck = await pool.query(`
@@ -63,7 +63,7 @@ class Booking {
         // Check for booking conflicts (excluding current booking)
         const conflictCheck = await pool.query(`
             SELECT id FROM bookings 
-            WHERE facility_id = $1 AND date = $2 AND id != $6
+            WHERE facility_id = $1 AND date = $2 AND id != $5
             AND ((start_time <= $3 AND end_time > $3) OR (start_time < $4 AND end_time >= $4) OR (start_time >= $3 AND end_time <= $4))
             AND status != 'cancelled'
         `, [facility_id, date, start_time, end_time, id]);
@@ -107,6 +107,14 @@ class Booking {
             ORDER BY b.date DESC, b.start_time DESC
         `, [userId]);
         return result.rows;
+    }
+
+    static async updateStatus(id, status) {
+        const result = await pool.query(
+            `UPDATE bookings SET status = $1 WHERE id = $2 RETURNING *`,
+            [status, id]
+        );
+        return result.rows[0];
     }
 }
 

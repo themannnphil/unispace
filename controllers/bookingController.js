@@ -70,7 +70,7 @@ class BookingController {
                     message: error.message
                 });
             }
-            
+
             res.status(500).json({
                 success: false,
                 message: 'Error creating booking',
@@ -112,7 +112,7 @@ class BookingController {
                     message: error.message
                 });
             }
-            
+
             res.status(500).json({
                 success: false,
                 message: 'Error updating booking',
@@ -124,7 +124,7 @@ class BookingController {
     static async cancelBooking(req, res) {
         try {
             const { id } = req.params;
-            const booking = await Booking.update(id, { status: 'cancelled' });
+            const booking = await Booking.updateStatus(id, 'cancelled');
 
             if (!booking) {
                 return res.status(404).json({
@@ -185,7 +185,7 @@ class BookingController {
             }
 
             const bookedSlots = await Booking.getAvailability(facility_id, date);
-            
+
             // Generate available 30-minute slots from 8:00 AM to 10:00 PM
             const availableSlots = [];
             const startTime = moment().hour(8).minute(0);
@@ -255,6 +255,42 @@ class BookingController {
             res.status(500).json({
                 success: false,
                 message: 'Error retrieving user bookings',
+                error: error.message
+            });
+        }
+    }
+
+    static async patchBookingStatus(req, res) {
+        try {
+            const { id } = req.params;
+            const { status } = req.body;
+
+            const validStatuses = ['confirmed', 'cancelled', 'pending'];
+            if (!status || !validStatuses.includes(status)) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Status must be one of: ${validStatuses.join(', ')}`
+                });
+            }
+
+            const booking = await Booking.updateStatus(id, status);
+
+            if (!booking) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Booking not found'
+                });
+            }
+
+            res.json({
+                success: true,
+                data: booking,
+                message: `Booking ${status} successfully`
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: 'Error updating booking status',
                 error: error.message
             });
         }

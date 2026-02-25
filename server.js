@@ -1,9 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
-
-// Load environment variables
-dotenv.config();
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,6 +9,16 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Add error handling middleware
+app.use((err, req, res, next) => {
+    console.error('Server error:', err);
+    res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+    });
+});
 
 // API Routes first
 const facilitiesRouter = require('./routes/facilities');
@@ -35,6 +42,17 @@ app.get('/original', (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
 });
 
+// Health check endpoint (before database-dependent routes)
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'OK',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        environment: process.env.NODE_ENV || 'development',
+        port: PORT
+    });
+});
+
 // API Information
 app.get('/api', (req, res) => {
     res.json({
@@ -43,37 +61,10 @@ app.get('/api', (req, res) => {
         endpoints: {
             facilities: '/api/facilities',
             bookings: '/api/bookings',
-            users: '/api/users'
+            users: '/api/users',
+            health: '/api/health'
         }
     });
-});
-
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-    res.json({
-        status: 'OK',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime()
-    });
-});
-
-// Database setup endpoint for Render
-app.post('/api/setup', async (req, res) => {
-    try {
-        const cleanSetupDatabase = require('./database/clean-setup');
-        await cleanSetupDatabase();
-        res.json({
-            success: true,
-            message: 'Database setup completed successfully on Render'
-        });
-    } catch (error) {
-        console.error('Database setup failed:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Database setup failed',
-            error: error.message
-        });
-    }
 });
 
 // 404 handler
@@ -95,9 +86,25 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
     console.log(`API Documentation: http://localhost:${PORT}/`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down gracefully');
+    server.close(() => {
+        console.log('Process terminated');
+    });
+});
+
+process.on('SIGINT', () => {
+    console.log('SIGINT received, shutting down gracefully');
+    server.close(() => {
+        console.log('Process terminated');
+    });
 });
 
 module.exports = app;
