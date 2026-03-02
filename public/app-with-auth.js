@@ -6,6 +6,18 @@ let currentUser = null;
 let allFacilities = []; // Store all facilities for filtering and sorting
 let allBookings = []; // Store all bookings for filtering and management
 
+// Format a date string (handles both "2026-03-02" and "2026-03-02T00:00:00.000Z")
+function formatDate(dateStr) {
+    if (!dateStr) return 'N/A';
+    return String(dateStr).split('T')[0];
+}
+
+// Format a time string (strips seconds: "09:00:00" → "09:00")
+function formatTime(timeStr) {
+    if (!timeStr) return 'N/A';
+    return String(timeStr).substring(0, 5);
+}
+
 // Initialize application
 document.addEventListener('DOMContentLoaded', function () {
     // Check if user is already logged in
@@ -117,6 +129,16 @@ function showMainApp() {
     document.getElementById('current-user-name').textContent = currentUser.name;
     document.getElementById('user-role-badge').textContent = currentUser.role;
 
+    // Update dashboard welcome name
+    const dashUser = document.getElementById('dashboard-username');
+    if (dashUser) dashUser.textContent = currentUser.name;
+
+    // Adjust stat card label based on role
+    const totalBookingsLabel = document.querySelector('#total-bookings-count + .stat-label');
+    if (totalBookingsLabel) {
+        totalBookingsLabel.textContent = currentUser.role === 'admin' ? 'Total Bookings' : 'My Active Bookings';
+    }
+
     // Show appropriate navigation
     if (currentUser.role === 'admin') {
         document.getElementById('user-nav').style.display = 'none';
@@ -218,41 +240,66 @@ function displayFacilities(facilities) {
     const container = document.getElementById('facilities-list');
 
     if (facilities.length === 0) {
-        container.innerHTML = '<div class="col-12"><p class="text-muted">No facilities available</p></div>';
+        container.innerHTML = `
+            <div class="col-12">
+                <div class="empty-state">
+                    <i class="fas fa-building fa-3x mb-3"></i>
+                    <h5>No Facilities Available</h5>
+                    <p class="text-muted small">No facilities have been added yet.</p>
+                </div>
+            </div>`;
         return;
     }
 
-    container.innerHTML = facilities.map(facility => `
-        <div class="col-md-6 col-lg-4 mb-4">
+    const palette = [
+        { bg: '#eef2ff', color: '#3b5bdb' },
+        { bg: '#ebfbee', color: '#2f9e44' },
+        { bg: '#fff4e6', color: '#e67700' },
+        { bg: '#e7f5ff', color: '#1971c2' },
+        { bg: '#fff0f6', color: '#c2255c' },
+        { bg: '#f3f0ff', color: '#7048e8' },
+    ];
+
+    container.innerHTML = facilities.map((facility, index) => {
+        const c = palette[index % palette.length];
+        return `
+        <div class="col-md-6 col-lg-4">
             <div class="card facility-card h-100" onclick="selectFacility(${facility.id})">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <i class="fas fa-building text-primary"></i> ${facility.name}
-                    </h5>
-                    <p class="card-text">
-                        <i class="fas fa-map-marker-alt text-muted"></i> ${facility.location}<br>
-                        <i class="fas fa-users text-muted"></i> Capacity: ${facility.capacity} people
-                    </p>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="badge bg-success">Available</span>
-                        <div>
-                            ${currentUser && currentUser.role === 'admin' ? `
-                                <button class="btn btn-sm btn-warning me-1" onclick="event.stopPropagation(); editFacility(${facility.id})">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger me-1" onclick="event.stopPropagation(); deleteFacility(${facility.id})">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            ` : ''}
-                            <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); selectFacility(${facility.id})">
-                                <i class="fas fa-calendar-plus"></i> Book Now
-                            </button>
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="facility-icon-wrap me-3" style="background:${c.bg};color:${c.color}">
+                            <i class="fas fa-building"></i>
                         </div>
+                        <div class="flex-grow-1 min-width-0">
+                            <h5 class="card-title mb-1 fw-semibold text-truncate" style="color:#1a1a2e">${facility.name}</h5>
+                            <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>${facility.location}</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <span class="badge border" style="background:#f8f9fa;color:#495057;font-weight:500;font-size:0.78rem">
+                            <i class="fas fa-users me-1" style="color:${c.color}"></i>${facility.capacity} seats
+                        </span>
+                        <span class="badge" style="background:#ebfbee;color:#2f9e44;font-size:0.78rem">
+                            <i class="fas fa-circle me-1" style="font-size:6px;vertical-align:middle"></i>Available
+                        </span>
+                    </div>
+                    <div class="d-flex gap-2 align-items-center">
+                        ${currentUser && currentUser.role === 'admin' ? `
+                            <button class="btn btn-sm btn-outline-warning px-2" onclick="event.stopPropagation(); editFacility(${facility.id})" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger px-2" onclick="event.stopPropagation(); deleteFacility(${facility.id})" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        ` : ''}
+                        <button class="btn btn-sm btn-primary ms-auto" onclick="event.stopPropagation(); selectFacility(${facility.id})">
+                            <i class="fas fa-calendar-plus me-1"></i>Book Now
+                        </button>
                     </div>
                 </div>
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 // Select a facility for booking
@@ -285,15 +332,29 @@ async function selectFacility(facilityId) {
 function displayFacilityDetails(facility) {
     const container = document.getElementById('facility-details');
     container.innerHTML = `
-        <h6>${facility.name}</h6>
-        <p><strong>Location:</strong> ${facility.location}</p>
-        <p><strong>Capacity:</strong> ${facility.capacity} people</p>
-        <p><strong>Facility ID:</strong> ${facility.id}</p>
-        <div class="mt-3">
-            <small class="text-muted">
-                <i class="fas fa-info-circle"></i> 
-                Select a date and time slot to make a booking
-            </small>
+        <div class="mb-3">
+            <div class="facility-icon-wrap mb-3" style="background:#eef2ff;color:#3b5bdb;width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem">
+                <i class="fas fa-building"></i>
+            </div>
+            <h5 class="fw-bold mb-1">${facility.name}</h5>
+        </div>
+        <ul class="list-unstyled small mb-3">
+            <li class="mb-2 d-flex align-items-center gap-2">
+                <i class="fas fa-map-marker-alt text-muted" style="width:16px"></i>
+                <span>${facility.location}</span>
+            </li>
+            <li class="mb-2 d-flex align-items-center gap-2">
+                <i class="fas fa-users text-muted" style="width:16px"></i>
+                <span>Capacity: <strong>${facility.capacity} people</strong></span>
+            </li>
+            <li class="d-flex align-items-center gap-2">
+                <i class="fas fa-hashtag text-muted" style="width:16px"></i>
+                <span>Facility ID: <strong>#${facility.id}</strong></span>
+            </li>
+        </ul>
+        <div class="alert alert-info py-2 px-3 small mb-0">
+            <i class="fas fa-info-circle me-1"></i>
+            Select a date and time slot to make a booking
         </div>
     `;
 }
@@ -306,11 +367,20 @@ async function loadAvailability() {
     if (!date) return;
 
     try {
-        const response = await fetch(`${API_BASE}/bookings/availability/check?facility_id=${currentFacility.id}&date=${date}`);
-        const result = await response.json();
+        const [availResponse, userBookingsResponse] = await Promise.all([
+            fetch(`${API_BASE}/bookings/availability/check?facility_id=${currentFacility.id}&date=${date}`),
+            fetch(`${API_BASE}/bookings/user/history?user_id=${currentUser.id}`)
+        ]);
 
-        if (result.success) {
-            displayTimeSlots(result.data.available_slots);
+        const availResult = await availResponse.json();
+        const userBookingsResult = await userBookingsResponse.json();
+
+        if (availResult.success) {
+            // Find any bookings this user already has on this date
+            const userBookingsForDate = userBookingsResult.success
+                ? userBookingsResult.data.filter(b => formatDate(b.date) === date && b.status !== 'cancelled')
+                : [];
+            displayTimeSlots(availResult.data.available_slots, userBookingsForDate);
         } else {
             showAlert('Error loading availability', 'danger');
         }
@@ -321,23 +391,46 @@ async function loadAvailability() {
 }
 
 // Display available time slots
-function displayTimeSlots(slots) {
+// userBookings: list of the current user's non-cancelled bookings for this date
+function displayTimeSlots(slots, userBookings = []) {
     const container = document.getElementById('time-slots');
 
     if (slots.length === 0) {
-        container.innerHTML = '<p class="text-muted">No available slots for this date</p>';
+        container.innerHTML = '<div class="col-12"><p class="text-muted small">No available slots for this date</p></div>';
         return;
     }
 
-    container.innerHTML = slots.map(slot => `
-        <div class="col-md-6 col-lg-4 mb-2">
+    container.innerHTML = slots.map(slot => {
+        // Check if the user already has a booking that overlaps this slot
+        const alreadyBooked = userBookings.some(b => {
+            const bStart = formatTime(b.start_time);
+            const bEnd   = formatTime(b.end_time);
+            return slot.start_time < bEnd && slot.end_time > bStart;
+        });
+
+        if (alreadyBooked) {
+            return `
+            <div class="col-6 col-md-4 col-lg-4">
+                <div class="card time-slot booked" title="You already have a booking at this time">
+                    <div class="card-body text-center py-2 px-1">
+                        <small class="fw-semibold" style="font-size:0.78rem">${slot.start_time}</small>
+                        <div style="font-size:0.7rem;opacity:0.7">to ${slot.end_time}</div>
+                        <div style="font-size:0.65rem;color:#c92a2a;margin-top:2px"><i class="fas fa-user-clock"></i> Booked</div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        return `
+        <div class="col-6 col-md-4 col-lg-4">
             <div class="card time-slot" onclick="selectTimeSlot('${slot.start_time}', '${slot.end_time}', this)">
-                <div class="card-body text-center py-2">
-                    <small>${slot.start_time} - ${slot.end_time}</small>
+                <div class="card-body text-center py-2 px-1">
+                    <small class="fw-semibold" style="font-size:0.78rem">${slot.start_time}</small>
+                    <div style="font-size:0.7rem;opacity:0.7">to ${slot.end_time}</div>
                 </div>
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 // Select a time slot
@@ -403,7 +496,7 @@ async function createBooking() {
         const result = await response.json();
 
         if (result.success) {
-            showAlert('Booking created successfully!', 'success');
+            showAlert('Booking created successfully! Awaiting admin approval.', 'success');
             // Reset form
             document.getElementById('user-name').value = currentUser.name || '';
             document.getElementById('user-email').value = currentUser.email || '';
@@ -412,8 +505,9 @@ async function createBooking() {
                 slot.classList.remove('selected');
             });
             document.getElementById('create-booking-btn').disabled = true;
-            // Reload availability
+            // Reload availability and refresh dashboard stats
             loadAvailability();
+            loadDashboardStats();
         } else {
             showAlert(result.message || 'Error creating booking', 'danger');
         }
@@ -450,48 +544,47 @@ function displayUserBookings(bookings) {
 
     if (!bookings || bookings.length === 0) {
         container.innerHTML = `
-            <div class="text-center py-5">
-                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
-                <h4 class="text-muted">No Bookings Found</h4>
-                <p class="text-muted">You haven't made any bookings yet. Browse facilities to create your first booking!</p>
-                <button class="btn btn-primary mt-3" onclick="showSection('facilities')">
-                    <i class="fas fa-building"></i> Browse Facilities
+            <div class="empty-state">
+                <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                <h5>No Bookings Found</h5>
+                <p class="text-muted small mb-3">You haven't made any bookings yet. Browse facilities to get started!</p>
+                <button class="btn btn-primary" onclick="showSection('facilities')">
+                    <i class="fas fa-building me-1"></i>Browse Facilities
                 </button>
-            </div>
-        `;
+            </div>`;
         return;
     }
 
     container.innerHTML = bookings.map(booking => {
         let statusBadge, statusText, canCancel = false;
         switch (booking.status) {
-            case 'pending': statusBadge = 'bg-warning'; statusText = 'Pending'; canCancel = true; break;
-            case 'confirmed': statusBadge = 'bg-success'; statusText = 'Confirmed'; canCancel = true; break;
-            case 'cancelled': statusBadge = 'bg-danger'; statusText = 'Cancelled'; canCancel = false; break;
-            default: statusBadge = 'bg-secondary'; statusText = 'Unknown'; canCancel = false;
+            case 'pending':   statusBadge = 'bg-warning text-dark'; statusText = 'Pending';   canCancel = true;  break;
+            case 'confirmed': statusBadge = 'bg-success';           statusText = 'Confirmed'; canCancel = true;  break;
+            case 'cancelled': statusBadge = 'bg-danger';            statusText = 'Cancelled'; canCancel = false; break;
+            default:          statusBadge = 'bg-secondary';         statusText = 'Unknown';   canCancel = false;
         }
+        const cardClass = booking.status === 'cancelled' ? 'cancelled' : booking.status === 'confirmed' ? 'confirmed' : '';
         return `
-            <div class="card booking-card mb-3 ${booking.status === 'cancelled' ? 'cancelled' : ''}">
-                <div class="card-body">
-                    <div class="row align-items-center">
+            <div class="card booking-card mb-3 ${cardClass}">
+                <div class="card-body py-3">
+                    <div class="row align-items-center g-2">
                         <div class="col-md-5">
-                            <h5 class="mb-1"><i class="fas fa-building text-primary me-2"></i>${booking.facility_name || 'Unknown Facility'}</h5>
+                            <div class="fw-semibold mb-1"><i class="fas fa-building text-primary me-2"></i>${booking.facility_name || 'Unknown Facility'}</div>
                             <small class="text-muted">Booking #${booking.id}</small>
                         </div>
-                        <div class="col-md-4">
-                            <div><i class="fas fa-calendar text-muted me-1"></i>${booking.date || 'N/A'}</div>
-                            <div><i class="fas fa-clock text-muted me-1"></i>${booking.start_time || 'N/A'} – ${booking.end_time || 'N/A'}</div>
+                        <div class="col-md-4 small text-muted">
+                            <div class="mb-1"><i class="fas fa-calendar me-1"></i>${formatDate(booking.date)}</div>
+                            <div><i class="fas fa-clock me-1"></i>${formatTime(booking.start_time)} – ${formatTime(booking.end_time)}</div>
                         </div>
-                        <div class="col-md-2 text-center">
+                        <div class="col-md-2 text-md-center">
                             <span class="badge ${statusBadge}">${statusText}</span>
                         </div>
-                        <div class="col-md-1 text-end">
-                            ${canCancel ? `<button class="btn btn-danger btn-sm" onclick="cancelBooking(${booking.id})" title="Cancel"><i class="fas fa-times"></i></button>` : ''}
+                        <div class="col-md-1 text-md-end">
+                            ${canCancel ? `<button class="btn btn-outline-danger btn-sm" onclick="cancelBooking(${booking.id})" title="Cancel booking"><i class="fas fa-times"></i></button>` : ''}
                         </div>
                     </div>
                 </div>
-            </div>
-        `;
+            </div>`;
     }).join('');
 }
 
@@ -501,23 +594,28 @@ function displayBookingsList(bookings, containerId) {
     if (!container) return;
 
     if (!bookings || bookings.length === 0) {
-        container.innerHTML = '<p class="text-muted mb-0">No bookings yet.</p>';
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fas fa-calendar-times fa-2x text-muted mb-2"></i>
+                <p class="text-muted small mb-0">No bookings yet. <a href="#" onclick="showSection('facilities')">Browse facilities</a> to make your first booking.</p>
+            </div>`;
         return;
     }
 
+    const isAdmin = currentUser && currentUser.role === 'admin';
     const rows = bookings.slice(0, 8).map(b => {
-        const badge = b.status === 'confirmed' ? 'bg-success' : b.status === 'pending' ? 'bg-warning' : 'bg-danger';
-        const userCol = (currentUser && currentUser.role === 'admin') ? `<td class="text-muted small">${b.user_name || '—'}</td>` : '';
+        const badge = b.status === 'confirmed' ? 'bg-success' : b.status === 'pending' ? 'bg-warning text-dark' : 'bg-danger';
+        const userCol = isAdmin ? `<td class="text-muted">${b.user_name || '—'}</td>` : '';
         return `<tr>
-            <td>${b.facility_name || '—'}</td>
+            <td class="fw-semibold">${b.facility_name || '—'}</td>
             ${userCol}
-            <td>${b.date || '—'}</td>
-            <td>${b.start_time || '—'} – ${b.end_time || '—'}</td>
+            <td>${formatDate(b.date)}</td>
+            <td>${formatTime(b.start_time)} – ${formatTime(b.end_time)}</td>
             <td><span class="badge ${badge}">${b.status}</span></td>
         </tr>`;
     }).join('');
 
-    const userHeader = (currentUser && currentUser.role === 'admin') ? '<th>User</th>' : '';
+    const userHeader = isAdmin ? '<th>User</th>' : '';
     container.innerHTML = `
         <table class="table table-sm table-hover mb-0">
             <thead><tr><th>Facility</th>${userHeader}<th>Date</th><th>Time</th><th>Status</th></tr></thead>
@@ -533,15 +631,18 @@ async function cancelBooking(bookingId) {
 
     try {
         const response = await fetch(`${API_BASE}/bookings/${bookingId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: currentUser.id })
         });
 
         const result = await response.json();
 
         if (result.success) {
             showAlert('Booking cancelled successfully', 'success');
-            // Reload bookings
+            // Reload bookings and refresh dashboard stats
             loadUserBookings();
+            loadDashboardStats();
         } else {
             showAlert(result.message || 'Error cancelling booking', 'danger');
         }
@@ -814,8 +915,8 @@ function displayAllBookings(bookings) {
             '</div>' +
             '<div class="col-md-3">' +
             '<p class="card-text mb-1">' +
-            '<i class="fas fa-calendar text-muted"></i> ' + (booking.date || 'N/A') + '<br>' +
-            '<i class="fas fa-clock text-muted"></i> ' + (booking.start_time || 'N/A') + ' - ' + (booking.end_time || 'N/A') +
+            '<i class="fas fa-calendar text-muted"></i> ' + formatDate(booking.date) + '<br>' +
+            '<i class="fas fa-clock text-muted"></i> ' + formatTime(booking.start_time) + ' - ' + formatTime(booking.end_time) +
             '</p>' +
             '</div>' +
             '<div class="col-md-3 text-end">' +
@@ -862,7 +963,7 @@ async function approveBooking(bookingId) {
         const response = await fetch(`${API_BASE}/bookings/${bookingId}/status`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'confirmed' })
+            body: JSON.stringify({ status: 'confirmed', requesting_user_id: currentUser.id })
         });
         const result = await response.json();
         if (result.success) {
@@ -885,7 +986,7 @@ async function rejectBooking(bookingId) {
         const response = await fetch(`${API_BASE}/bookings/${bookingId}/status`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'cancelled' })
+            body: JSON.stringify({ status: 'cancelled', requesting_user_id: currentUser.id })
         });
         const result = await response.json();
         if (result.success) {
@@ -947,7 +1048,7 @@ async function adminCancelBooking(bookingId) {
         const response = await fetch(`${API_BASE}/bookings/${bookingId}/status`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'cancelled' })
+            body: JSON.stringify({ status: 'cancelled', requesting_user_id: currentUser.id })
         });
         const result = await response.json();
         if (result.success) {
@@ -1125,22 +1226,29 @@ async function loadDashboardStats() {
         const facilitiesCount = facilitiesResult.success ? facilitiesResult.data.length : 0;
         document.getElementById('total-facilities-count').textContent = facilitiesCount;
 
-        // Get bookings statistics
-        const bookingsResponse = await fetch(`${API_BASE}/bookings`);
-        const bookingsResult = await bookingsResponse.json();
-
-        if (bookingsResult.success) {
-            const bookings = bookingsResult.data;
-            const today = new Date().toISOString().split('T')[0];
-
-            const totalBookings = bookings.length;
-            const pendingBookings = bookings.filter(b => b.status === 'pending').length;
-            const todayBookings = bookings.filter(b => b.date === today).length;
-
-            document.getElementById('total-bookings-count').textContent = totalBookings;
-            document.getElementById('pending-bookings-count').textContent = pendingBookings;
-            document.getElementById('today-bookings-count').textContent = todayBookings;
+        // Get bookings — user-specific for regular users, all bookings for admin
+        let bookings = [];
+        if (currentUser && currentUser.role === 'admin') {
+            const bookingsResponse = await fetch(`${API_BASE}/bookings`);
+            const bookingsResult = await bookingsResponse.json();
+            if (bookingsResult.success) bookings = bookingsResult.data;
+        } else {
+            const bookingsResponse = await fetch(`${API_BASE}/bookings/user/history?user_id=${currentUser.id}`);
+            const bookingsResult = await bookingsResponse.json();
+            if (bookingsResult.success) bookings = bookingsResult.data;
         }
+
+        const today = new Date().toISOString().split('T')[0];
+
+        // Active bookings = non-cancelled (pending + confirmed)
+        // For regular users this is their personal count; for admin it's system-wide
+        const activeBookings = bookings.filter(b => b.status !== 'cancelled').length;
+        const pendingBookings = bookings.filter(b => b.status === 'pending').length;
+        const todayBookings = bookings.filter(b => formatDate(b.date) === today && b.status !== 'cancelled').length;
+
+        document.getElementById('total-bookings-count').textContent = activeBookings;
+        document.getElementById('pending-bookings-count').textContent = pendingBookings;
+        document.getElementById('today-bookings-count').textContent = todayBookings;
     } catch (error) {
         console.error('Error loading dashboard stats:', error);
     }
@@ -1249,62 +1357,43 @@ function displayPendingBookings(bookings) {
 
     if (!bookings || bookings.length === 0) {
         container.innerHTML = `
-            <div class="text-center py-5">
-                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
-                <h4 class="text-muted">No Pending Bookings</h4>
-                <p class="text-muted">All bookings have been processed!</p>
-            </div>
-        `;
+            <div class="empty-state">
+                <i class="fas fa-check-circle fa-3x mb-3" style="color:#2f9e44"></i>
+                <h5>All Clear!</h5>
+                <p class="text-muted small">No pending bookings — all have been processed.</p>
+            </div>`;
         return;
     }
 
-    // Create booking cards for approval
-    const bookingsHtml = bookings.map(booking => {
-        return `
-            <div class="card mb-3 border-start border-warning">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-4">
-                            <h6 class="card-title">
-                                <i class="fas fa-building text-primary"></i> ${booking.facility_name || 'Unknown Facility'}
-                            </h6>
-                            <small class="text-muted">Booking #${booking.id || 'N/A'}</small>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-2">
-                                <i class="fas fa-calendar text-muted"></i>
-                                <strong>Date:</strong> ${booking.date || 'N/A'}
-                            </div>
-                            <div class="mb-2">
-                                <i class="fas fa-clock text-muted"></i>
-                                <strong>Time:</strong> ${booking.start_time || 'N/A'} - ${booking.end_time || 'N/A'}
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-2">
-                                <i class="fas fa-user text-muted"></i>
-                                <strong>User:</strong> ${booking.user_name || 'Unknown User'}
-                            </div>
-                            <div class="mb-2">
-                                <i class="fas fa-envelope text-muted"></i>
-                                <strong>Email:</strong> ${booking.user_email || 'N/A'}
-                            </div>
-                        </div>
+    const bookingsHtml = bookings.map(booking => `
+        <div class="card approval-pending-card mb-3">
+            <div class="card-body py-3">
+                <div class="row align-items-center g-2">
+                    <div class="col-md-3">
+                        <div class="fw-semibold mb-1"><i class="fas fa-building text-primary me-2"></i>${booking.facility_name || 'Unknown Facility'}</div>
+                        <small class="text-muted">Booking #${booking.id || 'N/A'}</small>
                     </div>
-                    <div class="col-md-2 text-end">
+                    <div class="col-md-3 small text-muted">
+                        <div class="mb-1"><i class="fas fa-calendar me-1"></i><strong>Date:</strong> ${formatDate(booking.date)}</div>
+                        <div><i class="fas fa-clock me-1"></i><strong>Time:</strong> ${formatTime(booking.start_time)} – ${formatTime(booking.end_time)}</div>
+                    </div>
+                    <div class="col-md-3 small text-muted">
+                        <div class="mb-1"><i class="fas fa-user me-1"></i>${booking.user_name || 'Unknown User'}</div>
+                        <div><i class="fas fa-envelope me-1"></i>${booking.user_email || 'N/A'}</div>
+                    </div>
+                    <div class="col-md-3 text-md-end">
                         <div class="btn-group" role="group">
-                            <button class="btn btn-success" onclick="approveBooking(${booking.id})" title="Approve this booking">
-                                <i class="fas fa-check"></i> Approve
+                            <button class="btn btn-success btn-sm" onclick="approveBooking(${booking.id})">
+                                <i class="fas fa-check me-1"></i>Approve
                             </button>
-                            <button class="btn btn-danger" onclick="rejectBooking(${booking.id})" title="Reject this booking">
-                                <i class="fas fa-times"></i> Reject
+                            <button class="btn btn-danger btn-sm" onclick="rejectBooking(${booking.id})">
+                                <i class="fas fa-times me-1"></i>Reject
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
-        `;
-    }).join('');
+        </div>`).join('');
 
     container.innerHTML = bookingsHtml;
 }

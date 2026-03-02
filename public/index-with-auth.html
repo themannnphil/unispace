@@ -4,221 +4,621 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Campus Facility Booking System</title>
+    <title>UniSpace — Campus Facility Booking</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .facility-card {
-            transition: transform 0.2s;
-            cursor: pointer;
+        /* ===== DESIGN TOKENS ===== */
+        :root {
+            --primary:       #3b5bdb;
+            --primary-dark:  #2f4ac5;
+            --primary-light: #eef2ff;
+            --success:       #2f9e44;
+            --success-light: #ebfbee;
+            --warning:       #e67700;
+            --warning-light: #fff4e6;
+            --danger:        #c92a2a;
+            --danger-light:  #fff5f5;
+            --info:          #1971c2;
+            --info-light:    #e7f5ff;
+            --dark:          #1a1a2e;
+            --muted:         #868e96;
+            --border:        #e9ecef;
+            --bg:            #f4f5f7;
+            --surface:       #ffffff;
+            --shadow-xs:     0 1px 3px rgba(0,0,0,0.06);
+            --shadow-sm:     0 2px 8px rgba(0,0,0,0.08);
+            --shadow:        0 4px 20px rgba(0,0,0,0.10);
+            --shadow-md:     0 8px 30px rgba(0,0,0,0.14);
+            --radius:        12px;
+            --radius-sm:     8px;
+            --radius-xs:     6px;
+            --transition:    all 0.2s ease;
         }
 
-        .facility-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        /* ===== BASE ===== */
+        body {
+            background-color: var(--bg);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: #212529;
+            font-size: 0.9375rem;
         }
 
-        .time-slot {
-            cursor: pointer;
-            transition: all 0.2s;
+        /* ===== AUTH PAGE ===== */
+        .auth-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(145deg, #1a237e 0%, #283593 35%, #3949ab 65%, #5c6bc0 100%);
+            position: relative;
+            overflow: hidden;
         }
 
-        .time-slot:hover:not(.booked) {
-            background-color: #e8f5e8;
+        .auth-section::before,
+        .auth-section::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
         }
 
-        .time-slot.booked {
-            background-color: #ffebee;
-            cursor: not-allowed;
+        .auth-section::before {
+            width: 480px;
+            height: 480px;
+            top: -160px;
+            right: -120px;
         }
 
-        .time-slot.selected {
-            background-color: #4caf50;
-            color: white;
+        .auth-section::after {
+            width: 320px;
+            height: 320px;
+            bottom: -100px;
+            left: -80px;
         }
 
-        .booking-card {
-            border-left: 4px solid #007bff;
+        .auth-card {
+            background: var(--surface);
+            border-radius: 20px;
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.35);
+            border: none;
+            position: relative;
+            z-index: 1;
         }
 
-        .booking-card.cancelled {
-            border-left-color: #dc3545;
-            opacity: 0.7;
+        .auth-brand-logo {
+            width: 56px;
+            height: 56px;
+            background: var(--primary-light);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+
+        .auth-brand-logo i {
+            font-size: 1.6rem;
+            color: var(--primary);
+        }
+
+        .auth-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--dark);
+            letter-spacing: -0.4px;
+        }
+
+        .auth-subtitle {
+            color: var(--muted);
+            font-size: 0.875rem;
+        }
+
+        .auth-divider {
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary) 0%, #a5b4fc 100%);
+            border-radius: 2px;
+            width: 40px;
+            margin: 0.5rem auto 1.25rem;
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar {
+            background: linear-gradient(90deg, #1a237e 0%, #2e3f9e 100%) !important;
+            box-shadow: 0 2px 16px rgba(26, 35, 126, 0.4);
+            padding: 0.75rem 1rem;
         }
 
         .navbar-brand {
-            font-weight: bold;
+            font-weight: 800;
+            font-size: 1.25rem;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .loading {
-            display: none;
+        .navbar-brand .brand-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
         }
+
+        .nav-link {
+            font-weight: 500;
+            padding: 0.45rem 0.75rem !important;
+            border-radius: var(--radius-xs);
+            transition: var(--transition);
+            font-size: 0.875rem;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        /* ===== PAGE HEADER ===== */
+        .page-header h2 {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--dark);
+            margin-bottom: 0.2rem;
+        }
+
+        .page-header p {
+            color: var(--muted);
+            margin-bottom: 0;
+            font-size: 0.875rem;
+        }
+
+        /* ===== CARDS ===== */
+        .card {
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-xs);
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.25rem;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-header i {
+            color: var(--primary);
+            font-size: 0.95rem;
+        }
+
+        /* ===== STAT CARDS ===== */
+        .stat-card {
+            border: none !important;
+            border-radius: var(--radius) !important;
+            overflow: hidden;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md) !important;
+        }
+
+        .stat-card .card-body {
+            padding: 1.5rem !important;
+        }
+
+        .stat-card .stat-number {
+            font-size: 2.25rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            opacity: 0.85;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .stat-icon {
+            position: absolute;
+            right: 1.25rem;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.18;
+            font-size: 3.25rem;
+        }
+
+        .stat-primary {
+            background: linear-gradient(135deg, #3b5bdb 0%, #4c6ef5 100%);
+            color: white;
+            box-shadow: 0 6px 20px rgba(59, 91, 219, 0.35) !important;
+        }
+
+        .stat-success {
+            background: linear-gradient(135deg, #2f9e44 0%, #40c057 100%);
+            color: white;
+            box-shadow: 0 6px 20px rgba(47, 158, 68, 0.35) !important;
+        }
+
+        .stat-warning {
+            background: linear-gradient(135deg, #e67700 0%, #fd7e14 100%);
+            color: white;
+            box-shadow: 0 6px 20px rgba(230, 119, 0, 0.35) !important;
+        }
+
+        .stat-info {
+            background: linear-gradient(135deg, #1971c2 0%, #228be6 100%);
+            color: white;
+            box-shadow: 0 6px 20px rgba(25, 113, 194, 0.35) !important;
+        }
+
+        /* ===== FACILITY CARDS ===== */
+        .facility-card {
+            transition: var(--transition);
+            cursor: pointer;
+            border-radius: var(--radius) !important;
+        }
+
+        .facility-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md) !important;
+            border-color: rgba(59, 91, 219, 0.3) !important;
+        }
+
+        .facility-icon-wrap {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        /* ===== TIME SLOTS ===== */
+        .time-slot {
+            cursor: pointer;
+            transition: var(--transition);
+            border-radius: var(--radius-sm) !important;
+            border: 2px solid var(--border) !important;
+        }
+
+        .time-slot:hover:not(.booked) {
+            background-color: var(--primary-light) !important;
+            border-color: var(--primary) !important;
+            color: var(--primary);
+        }
+
+        .time-slot.booked {
+            background-color: #fff5f5 !important;
+            border-color: #ffc9c9 !important;
+            cursor: not-allowed;
+            opacity: 0.65;
+        }
+
+        .time-slot.selected {
+            background-color: var(--primary) !important;
+            border-color: var(--primary) !important;
+            color: white !important;
+        }
+
+        /* ===== BOOKING CARDS ===== */
+        .booking-card {
+            transition: var(--transition);
+            border-left: 4px solid var(--primary) !important;
+            border-radius: var(--radius) !important;
+        }
+
+        .booking-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow) !important;
+        }
+
+        .booking-card.cancelled {
+            border-left-color: var(--danger) !important;
+            opacity: 0.72;
+        }
+
+        .booking-card.confirmed {
+            border-left-color: var(--success) !important;
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            padding: 56px 24px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #eef2ff 100%);
+            border-radius: var(--radius);
+            border: 2px dashed #c5c8d6;
+            text-align: center;
+        }
+
+        .empty-state i {
+            color: #adb5bd;
+        }
+
+        .empty-state h5 {
+            color: #495057;
+            font-weight: 600;
+        }
+
+        /* ===== QUICK ACTIONS ===== */
+        .quick-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 0.875rem;
+            text-align: left;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        .quick-action-btn i {
+            width: 20px;
+            text-align: center;
+            opacity: 0.85;
+        }
+
+        /* ===== APPROVAL CARDS ===== */
+        .approval-pending-card {
+            border-left: 4px solid var(--warning) !important;
+            border-radius: var(--radius) !important;
+        }
+
+        /* ===== FORMS ===== */
+        .form-control, .form-select {
+            border-radius: var(--radius-sm);
+            border-color: #ced4da;
+            padding: 0.575rem 0.875rem;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 91, 219, 0.15);
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-success:hover, .btn-danger:hover, .btn-warning:hover, .btn-info:hover {
+            transform: translateY(-1px);
+        }
+
+        /* ===== NAV TABS ===== */
+        .nav-tabs {
+            border-bottom: 2px solid var(--border);
+        }
+
+        .nav-tabs .nav-link {
+            color: var(--muted);
+            font-weight: 500;
+            border: none;
+            padding: 0.6rem 1rem !important;
+            border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--primary);
+            font-weight: 600;
+            background: transparent;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        /* ===== TABLE ===== */
+        .table {
+            font-size: 0.875rem;
+        }
+
+        .table th {
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.6px;
+            border-top: none;
+            padding: 0.6rem 0.75rem;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: var(--primary-light);
+        }
+
+        /* ===== BADGES ===== */
+        .badge {
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            padding: 0.35em 0.65em;
+        }
+
+        /* ===== ALERT ===== */
+        .alert-info {
+            background-color: var(--info-light);
+            border-color: #a5d8ff;
+            color: var(--info);
+        }
+
+        /* ===== NAV GROUPS (never use d-flex here — !important would fight display:none) ===== */
+        .nav-links {
+            display: flex;
+            gap: 0.25rem;
+            align-items: center;
+        }
+
+        /* ===== MISC ===== */
+        .loading { display: none; }
 
         .spinner-border-sm {
             width: 1rem;
             height: 1rem;
         }
 
-        .auth-section {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .section-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 1.5rem 0;
         }
 
-        .auth-card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-
-        .role-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-        }
-
-        /* User Bookings Custom Styles */
-        .booking-details {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #007bff;
-        }
-
-        .booking-card {
-            transition: all 0.3s ease;
-            border-left: 4px solid #007bff;
-        }
-
-        .booking-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        .booking-card.cancelled {
-            border-left-color: #dc3545;
-            opacity: 0.7;
-        }
-
-        .booking-card .btn-danger {
-            min-height: 60px;
-            font-weight: 500;
-        }
-
-        .booking-card .btn-danger:hover {
-            transform: scale(1.05);
-        }
-
-        .no-bookings-state {
-            padding: 60px 20px;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-radius: 15px;
-            border: 2px dashed #dee2e6;
-        }
-
-        .booking-card h5 {
-            color: #2c3e50;
-            font-weight: 600;
-        }
-
-        .booking-card .text-muted {
-            font-size: 0.9rem;
-        }
-
-        .booking-card .badge {
-            font-size: 0.8rem;
-            padding: 8px 12px;
-        }
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #aaa; }
     </style>
 </head>
 
 <body>
-    <!-- Login Section -->
+
+    <!-- ======== AUTH SCREEN ======== -->
     <div id="login-section" class="auth-section">
         <div class="container">
             <div class="row justify-content-center">
-                <div class="col-md-6 col-lg-4">
-                    <div class="card auth-card">
-                        <div class="card-body p-5">
-                            <div class="text-center mb-4">
-                                <h1>
-                                    <i class="fas fa-university text-primary"></i> UniSpace
-                                </h1>
-                                <p class="lead">University Facility Booking System</p>
-                            </div>
-                            <p class="text-muted">Sign in to continue</p>
+                <div class="col-sm-10 col-md-7 col-lg-5 col-xl-4">
+                    <div class="card auth-card border-0">
+                        <div class="card-body p-4 p-sm-5">
 
-                            <!-- Tab Navigation -->
-                            <ul class="nav nav-tabs mb-3" id="authTabs" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="login-tab" data-bs-toggle="tab"
+                            <!-- Brand -->
+                            <div class="text-center mb-4">
+                                <div class="auth-brand-logo">
+                                    <i class="fas fa-university"></i>
+                                </div>
+                                <h1 class="auth-title mb-1">UniSpace</h1>
+                                <div class="auth-divider"></div>
+                                <p class="auth-subtitle">University Facility Booking System</p>
+                            </div>
+
+                            <!-- Tabs -->
+                            <ul class="nav nav-tabs mb-4" id="authTabs" role="tablist">
+                                <li class="nav-item flex-fill" role="presentation">
+                                    <button class="nav-link active w-100" id="login-tab" data-bs-toggle="tab"
                                         data-bs-target="#login" type="button" role="tab">
-                                        Login
+                                        <i class="fas fa-sign-in-alt me-1"></i> Sign In
                                     </button>
                                 </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="register-tab" data-bs-toggle="tab"
+                                <li class="nav-item flex-fill" role="presentation">
+                                    <button class="nav-link w-100" id="register-tab" data-bs-toggle="tab"
                                         data-bs-target="#register" type="button" role="tab">
-                                        Create Account
+                                        <i class="fas fa-user-plus me-1"></i> Register
                                     </button>
                                 </li>
                             </ul>
 
                             <!-- Tab Content -->
                             <div class="tab-content" id="authTabContent">
-                                <!-- Login Tab -->
+
+                                <!-- Login -->
                                 <div class="tab-pane fade show active" id="login" role="tabpanel">
                                     <form id="login-form">
                                         <div class="mb-3">
-                                            <label for="login-email" class="form-label">Email</label>
-                                            <input type="email" class="form-control" id="login-email" required>
+                                            <label for="login-email" class="form-label fw-semibold small">Email address</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border-end-0">
+                                                    <i class="fas fa-envelope text-muted" style="font-size:0.8rem"></i>
+                                                </span>
+                                                <input type="email" class="form-control border-start-0" id="login-email"
+                                                    placeholder="you@university.edu" required>
+                                            </div>
                                         </div>
                                         <div class="mb-3">
-                                            <label for="login-password" class="form-label">Password</label>
-                                            <input type="password" class="form-control" id="login-password" required>
+                                            <label for="login-password" class="form-label fw-semibold small">Password</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border-end-0">
+                                                    <i class="fas fa-lock text-muted" style="font-size:0.8rem"></i>
+                                                </span>
+                                                <input type="password" class="form-control border-start-0"
+                                                    id="login-password" placeholder="Enter your password" required>
+                                            </div>
                                         </div>
-                                        <div class="mb-3 form-check">
+                                        <div class="mb-4 form-check">
                                             <input type="checkbox" class="form-check-input" id="admin-login">
-                                            <label class="form-check-label" for="admin-login">
+                                            <label class="form-check-label small text-muted" for="admin-login">
                                                 Login as Administrator
                                             </label>
                                         </div>
-                                        <button type="submit" class="btn btn-primary w-100">
-                                            <i class="fas fa-sign-in-alt"></i> Sign In
+                                        <button type="submit" class="btn btn-primary w-100 py-2">
+                                            <i class="fas fa-sign-in-alt me-2"></i>Sign In
                                         </button>
                                     </form>
                                 </div>
 
-                                <!-- Register Tab -->
+                                <!-- Register -->
                                 <div class="tab-pane fade" id="register" role="tabpanel">
                                     <form id="register-form">
                                         <div class="mb-3">
-                                            <label for="register-name" class="form-label">Full Name</label>
-                                            <input type="text" class="form-control" id="register-name" required>
+                                            <label for="register-name" class="form-label fw-semibold small">Full Name</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border-end-0">
+                                                    <i class="fas fa-user text-muted" style="font-size:0.8rem"></i>
+                                                </span>
+                                                <input type="text" class="form-control border-start-0" id="register-name"
+                                                    placeholder="Your full name" required>
+                                            </div>
                                         </div>
                                         <div class="mb-3">
-                                            <label for="register-email" class="form-label">Email</label>
-                                            <input type="email" class="form-control" id="register-email" required>
+                                            <label for="register-email" class="form-label fw-semibold small">Email address</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border-end-0">
+                                                    <i class="fas fa-envelope text-muted" style="font-size:0.8rem"></i>
+                                                </span>
+                                                <input type="email" class="form-control border-start-0" id="register-email"
+                                                    placeholder="you@university.edu" required>
+                                            </div>
                                         </div>
                                         <div class="mb-3">
-                                            <label for="register-password" class="form-label">Password</label>
-                                            <input type="password" class="form-control" id="register-password" required
-                                                minlength="6">
-                                            <small class="form-text text-muted">Minimum 6 characters</small>
+                                            <label for="register-password" class="form-label fw-semibold small">Password</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border-end-0">
+                                                    <i class="fas fa-lock text-muted" style="font-size:0.8rem"></i>
+                                                </span>
+                                                <input type="password" class="form-control border-start-0"
+                                                    id="register-password" placeholder="Min. 6 characters" required minlength="6">
+                                            </div>
+                                            <div class="form-text small">Minimum 6 characters required</div>
                                         </div>
-                                        <div class="mb-3 form-check">
+                                        <div class="mb-4 form-check">
                                             <input type="checkbox" class="form-check-input" id="admin-register">
-                                            <label class="form-check-label" for="admin-register">
+                                            <label class="form-check-label small text-muted" for="admin-register">
                                                 Register as Administrator
                                             </label>
                                         </div>
-                                        <button type="submit" class="btn btn-success w-100">
-                                            <i class="fas fa-user-plus"></i> Create Account
+                                        <button type="submit" class="btn btn-success w-100 py-2">
+                                            <i class="fas fa-user-plus me-2"></i>Create Account
                                         </button>
                                     </form>
                                 </div>
+
                             </div>
                         </div>
                     </div>
@@ -227,167 +627,161 @@
         </div>
     </div>
 
-    <!-- Main Application -->
+    <!-- ======== MAIN APP ======== -->
     <div id="main-app" style="display: none;">
-        <!-- Navigation -->
-        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-            <div class="container">
+
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container-lg">
                 <a class="navbar-brand" href="#">
-                    <i class="fas fa-building"></i> UniSpace
+                    <div class="brand-icon">
+                        <i class="fas fa-university"></i>
+                    </div>
+                    UniSpace
                 </a>
-                <div class="navbar-nav ms-auto">
-                    <!-- User Navigation -->
-                    <div id="user-nav">
-                        <a class="nav-link" href="#" onclick="showSection('dashboard')">
-                            <i class="fas fa-tachometer-alt"></i> Dashboard
+
+                <div class="navbar-nav ms-auto align-items-center d-flex flex-row gap-1">
+
+                    <!-- User nav links -->
+                    <div id="user-nav" class="nav-links" style="display:none">
+                        <a class="nav-link text-white" href="#" onclick="showSection('dashboard')">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
                         </a>
-                        <a class="nav-link" href="#" onclick="showSection('facilities')">
-                            <i class="fas fa-home"></i> Facilities
+                        <a class="nav-link text-white" href="#" onclick="showSection('facilities')">
+                            <i class="fas fa-building me-1"></i>Facilities
+                        </a>
+                        <a class="nav-link text-white" href="#" onclick="showSection('bookings')">
+                            <i class="fas fa-calendar me-1"></i>My Bookings
                         </a>
                     </div>
 
-                    <!-- Admin Navigation -->
-                    <div id="admin-nav" style="display: none;">
-                        <a class="nav-link" href="#" onclick="showSection('dashboard')">
-                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                    <!-- Admin nav links -->
+                    <div id="admin-nav" class="nav-links" style="display:none">
+                        <a class="nav-link text-white" href="#" onclick="showSection('dashboard')">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
                         </a>
-                        <a class="nav-link" href="#" onclick="showSection('facilities')">
-                            <i class="fas fa-home"></i> Facilities
+                        <a class="nav-link text-white" href="#" onclick="showSection('facilities')">
+                            <i class="fas fa-building me-1"></i>Facilities
                         </a>
-                        <a class="nav-link" href="#" onclick="showSection('all-bookings')">
-                            <i class="fas fa-calendar-check"></i> All Bookings
+                        <a class="nav-link text-white" href="#" onclick="showSection('all-bookings')">
+                            <i class="fas fa-calendar-check me-1"></i>All Bookings
                         </a>
-                        <a class="nav-link" href="#" onclick="showSection('approval-portal')">
-                            <i class="fas fa-gavel"></i> Approvals
+                        <a class="nav-link text-white" href="#" onclick="showSection('approval-portal')">
+                            <i class="fas fa-gavel me-1"></i>Approvals
                         </a>
                     </div>
 
-                    <div class="navbar-nav">
-                        <div class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-user"></i> <span id="current-user-name">User</span>
-                                <span class="badge bg-warning ms-1" id="user-role-badge">User</span>
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" onclick="logout()">
-                                        <i class="fas fa-sign-out-alt"></i> Logout
-                                    </a></li>
-                            </ul>
-                        </div>
+                    <!-- User dropdown -->
+                    <div class="nav-item dropdown ms-2">
+                        <a class="nav-link dropdown-toggle text-white d-flex align-items-center gap-2" href="#"
+                            role="button" data-bs-toggle="dropdown">
+                            <div style="width:32px;height:32px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                                <i class="fas fa-user" style="font-size:0.8rem;"></i>
+                            </div>
+                            <span id="current-user-name" class="d-none d-md-inline">User</span>
+                            <span class="badge bg-warning ms-1" id="user-role-badge">User</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius:10px; min-width:160px;">
+                            <li><a class="dropdown-item py-2" href="#" onclick="logout()">
+                                <i class="fas fa-sign-out-alt me-2 text-danger"></i>Logout
+                            </a></li>
+                        </ul>
                     </div>
                 </div>
             </div>
         </nav>
 
         <!-- Main Content -->
-        <div class="container mt-4">
-            <!-- Dashboard Section -->
+        <div class="container-lg mt-4 pb-5">
+
+            <!-- ===== DASHBOARD ===== -->
             <div id="dashboard-section" class="section">
-                <div class="row mb-4">
+
+                <!-- Header -->
+                <div class="row mb-4 align-items-center">
                     <div class="col">
-                        <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
-                        <p class="text-muted">Overview of your facility booking system</p>
+                        <div class="page-header">
+                            <h2><i class="fas fa-tachometer-alt me-2 text-primary" style="font-size:1.2rem"></i>Dashboard</h2>
+                            <p>Welcome back, <span id="dashboard-username" class="fw-semibold text-primary"></span> — here's your overview</p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Statistics Cards -->
-                <div class="row mb-4">
-                    <div class="col-md-3 mb-3">
-                        <div class="card bg-primary text-white">
+                <!-- Stat Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-lg-3">
+                        <div class="card stat-card stat-primary">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <h4 class="card-title" id="total-facilities-count">0</h4>
-                                        <p class="card-text">Total Facilities</p>
-                                    </div>
-                                    <div class="align-self-center">
-                                        <i class="fas fa-building fa-2x"></i>
-                                    </div>
-                                </div>
+                                <div class="stat-number" id="total-facilities-count">0</div>
+                                <div class="stat-label">Total Facilities</div>
+                                <i class="fas fa-building stat-icon"></i>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="card bg-success text-white">
+                    <div class="col-6 col-lg-3">
+                        <div class="card stat-card stat-success">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <h4 class="card-title" id="total-bookings-count">0</h4>
-                                        <p class="card-text">Total Bookings</p>
-                                    </div>
-                                    <div class="align-self-center">
-                                        <i class="fas fa-calendar-check fa-2x"></i>
-                                    </div>
-                                </div>
+                                <div class="stat-number" id="total-bookings-count">0</div>
+                                <div class="stat-label">My Active Bookings</div>
+                                <i class="fas fa-calendar-check stat-icon"></i>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="card bg-warning text-white">
+                    <div class="col-6 col-lg-3">
+                        <div class="card stat-card stat-warning">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <h4 class="card-title" id="pending-bookings-count">0</h4>
-                                        <p class="card-text">Pending Bookings</p>
-                                    </div>
-                                    <div class="align-self-center">
-                                        <i class="fas fa-clock fa-2x"></i>
-                                    </div>
-                                </div>
+                                <div class="stat-number" id="pending-bookings-count">0</div>
+                                <div class="stat-label">Pending Approval</div>
+                                <i class="fas fa-clock stat-icon"></i>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="card bg-info text-white">
+                    <div class="col-6 col-lg-3">
+                        <div class="card stat-card stat-info">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <h4 class="card-title" id="today-bookings-count">0</h4>
-                                        <p class="card-text">Today's Bookings</p>
-                                    </div>
-                                    <div class="align-self-center">
-                                        <i class="fas fa-calendar-day fa-2x"></i>
-                                    </div>
-                                </div>
+                                <div class="stat-number" id="today-bookings-count">0</div>
+                                <div class="stat-label">Today's Bookings</div>
+                                <i class="fas fa-calendar-day stat-icon"></i>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Quick Actions & Recent Bookings -->
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="card">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h5><i class="fas fa-calendar"></i> Recent Bookings</h5>
-                                <span class="badge bg-warning" id="dashboard-pending-count">0</span>
+                <!-- Recent Bookings + Quick Actions -->
+                <div class="row g-3">
+                    <div class="col-lg-8">
+                        <div class="card h-100">
+                            <div class="card-header justify-content-between">
+                                <span><i class="fas fa-calendar"></i> Recent Bookings</span>
+                                <span class="badge bg-warning text-dark" id="dashboard-pending-count">0</span>
                             </div>
-                            <div class="card-body p-2">
-                                <div id="user-bookings-list">
-                                    <p class="text-muted">Loading bookings...</p>
+                            <div class="card-body p-0">
+                                <div id="user-bookings-list" class="p-3">
+                                    <p class="text-muted mb-0">Loading bookings…</p>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card">
+                    <div class="col-lg-4">
+                        <div class="card h-100">
                             <div class="card-header">
-                                <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
+                                <i class="fas fa-bolt"></i> Quick Actions
                             </div>
-                            <div class="card-body">
-                                <div class="d-grid gap-2">
-                                    <button class="btn btn-primary" onclick="showSection('facilities')">
-                                        <i class="fas fa-building"></i> Browse Facilities
+                            <div class="card-body d-flex flex-column gap-2">
+                                <button class="btn btn-primary quick-action-btn" onclick="showSection('facilities')">
+                                    <i class="fas fa-building"></i> Browse Facilities
+                                </button>
+                                <button class="btn btn-outline-primary quick-action-btn" onclick="showSection('bookings')">
+                                    <i class="fas fa-calendar"></i> My Bookings
+                                </button>
+                                <div id="admin-quick-actions" style="display: none;">
+                                    <hr class="my-1">
+                                    <button class="btn btn-info text-white quick-action-btn" onclick="showSection('all-bookings')">
+                                        <i class="fas fa-calendar-check"></i> Bookings Management
                                     </button>
-                                    <button class="btn btn-success" onclick="showSection('bookings')">
-                                        <i class="fas fa-calendar"></i> My Bookings
+                                    <button class="btn btn-outline-warning quick-action-btn mt-2" onclick="showSection('approval-portal')">
+                                        <i class="fas fa-gavel"></i> Approval Portal
                                     </button>
-                                    <div id="admin-quick-actions" style="display: none;">
-                                        <hr>
-                                        <button class="btn btn-info" onclick="showSection('all-bookings')">
-                                            <i class="fas fa-calendar-check"></i> Bookings Management
-                                        </button>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -395,268 +789,291 @@
                 </div>
             </div>
 
-            <!-- Facilities Section -->
-            <div id="facilities-section" class="section">
+            <!-- ===== FACILITIES ===== -->
+            <div id="facilities-section" class="section" style="display:none;">
                 <div class="row mb-4 align-items-center">
                     <div class="col">
-                        <h2><i class="fas fa-building"></i> Available Facilities</h2>
-                        <p class="text-muted">Click on a facility to check availability and make a booking</p>
+                        <div class="page-header">
+                            <h2><i class="fas fa-building me-2 text-primary" style="font-size:1.2rem"></i>Available Facilities</h2>
+                            <p>Click on a facility to check availability and make a booking</p>
+                        </div>
                     </div>
                     <div class="col-auto" id="facilities-add-btn" style="display:none;">
-                        <button class="btn btn-success"
-                            onclick="showSection('manage-facilities'); showAddFacilityForm();">
-                            <i class="fas fa-plus"></i> Add Facility
+                        <button class="btn btn-success" onclick="showSection('manage-facilities'); showAddFacilityForm();">
+                            <i class="fas fa-plus me-1"></i>Add Facility
                         </button>
                     </div>
                 </div>
 
-                <div class="row" id="facilities-list">
-                    <div class="col-12 text-center">
+                <div class="row g-3" id="facilities-list">
+                    <div class="col-12 text-center py-5">
                         <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
+                            <span class="visually-hidden">Loading…</span>
                         </div>
-                        <p class="mt-2">Loading facilities...</p>
+                        <p class="mt-2 text-muted">Loading facilities…</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Booking Section -->
+            <!-- ===== BOOKING FORM ===== -->
             <div id="booking-section" class="section" style="display: none;">
-                <button class="btn btn-secondary mb-3" onclick="showSection('facilities')">
-                    <i class="fas fa-arrow-left"></i> Back to Facilities
+                <button class="btn btn-outline-secondary mb-4" onclick="showSection('facilities')">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Facilities
                 </button>
-                <div class="container-fluid">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h1 class="navbar-brand mb-0 h1">
-                                <i class="fas fa-university text-primary"></i> UniSpace
-                            </h1>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h4 id="booking-facility-name">Select Date & Time</h4>
+
+                <div class="row g-3">
+                    <!-- Date & Time -->
+                    <div class="col-md-7">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span id="booking-facility-name">Select Date &amp; Time</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="booking-date" class="form-label fw-semibold small">Select Date</label>
+                                    <input type="date" class="form-control" id="booking-date" min="">
                                 </div>
-                                <div class="card-body">
-                                    <div class="mb-3">
-                                        <label for="booking-date" class="form-label">Select Date:</label>
-                                        <input type="date" class="form-control" id="booking-date" min="">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Available Time Slots:</label>
-                                        <div id="time-slots" class="row">
-                                            <p class="text-muted">Select a date to view available slots</p>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold small">Available Time Slots</label>
+                                    <div id="time-slots" class="row g-2">
+                                        <div class="col-12">
+                                            <p class="text-muted small">Select a date to view available slots</p>
                                         </div>
                                     </div>
-                                    <div class="mb-3">
-                                        <label for="user-name" class="form-label">Your Name:</label>
-                                        <input type="text" class="form-control" id="user-name"
-                                            placeholder="Enter your name">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="user-email" class="form-label">Your Email:</label>
-                                        <input type="email" class="form-control" id="user-email"
-                                            placeholder="Enter your email">
-                                    </div>
-                                    <button class="btn btn-primary" onclick="createBooking()" id="create-booking-btn"
-                                        disabled>
-                                        <i class="fas fa-calendar-plus"></i> Create Booking
-                                    </button>
                                 </div>
+                                <hr>
+                                <div class="row g-2">
+                                    <div class="col-sm-6">
+                                        <label for="user-name" class="form-label fw-semibold small">Your Name</label>
+                                        <input type="text" class="form-control" id="user-name" placeholder="Enter your name">
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label for="user-email" class="form-label fw-semibold small">Your Email</label>
+                                        <input type="email" class="form-control" id="user-email" placeholder="Enter your email">
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary mt-3 px-4" onclick="createBooking()" id="create-booking-btn" disabled>
+                                    <i class="fas fa-calendar-plus me-2"></i>Confirm Booking
+                                </button>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5>Facility Details</h5>
-                                </div>
-                                <div class="card-body" id="facility-details">
-                                    <p class="text-muted">Select a facility to view details</p>
-                                </div>
+                    </div>
+
+                    <!-- Facility Details -->
+                    <div class="col-md-5">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <i class="fas fa-info-circle"></i> Facility Details
+                            </div>
+                            <div class="card-body" id="facility-details">
+                                <p class="text-muted small">Select a facility to view details</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- My Bookings Section -->
+            <!-- ===== MY BOOKINGS ===== -->
             <div id="bookings-section" class="section" style="display: none;">
-                <div class="row mb-4">
+                <div class="row mb-4 align-items-center">
                     <div class="col">
-                        <h2><i class="fas fa-calendar"></i> My Bookings</h2>
-                        <p class="text-muted">View and manage your booking history. Cancel any booking that needs to be
-                            changed.</p>
+                        <div class="page-header">
+                            <h2><i class="fas fa-calendar me-2 text-primary" style="font-size:1.2rem"></i>My Bookings</h2>
+                            <p>View and manage your booking history. Cancel any booking that needs to be changed.</p>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-primary" onclick="showSection('facilities')">
+                            <i class="fas fa-plus me-1"></i>New Booking
+                        </button>
                     </div>
                 </div>
 
                 <div id="my-bookings-list">
                     <div class="text-center py-5">
                         <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
+                            <span class="visually-hidden">Loading…</span>
                         </div>
-                        <p class="text-muted mt-2">Loading your bookings...</p>
+                        <p class="text-muted mt-2 small">Loading your bookings…</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Admin: Manage Facilities Section -->
+            <!-- ===== ADMIN: MANAGE FACILITIES ===== -->
             <div id="manage-facilities-section" class="section" style="display: none;">
-                <div class="row mb-4">
+                <div class="row mb-4 align-items-center">
                     <div class="col">
-                        <h2><i class="fas fa-cog"></i> Manage Facilities</h2>
-                        <p class="text-muted">Add, edit, or remove campus facilities</p>
+                        <div class="page-header">
+                            <h2><i class="fas fa-cog me-2 text-primary" style="font-size:1.2rem"></i>Manage Facilities</h2>
+                            <p>Add, edit, or remove campus facilities</p>
+                        </div>
                     </div>
                     <div class="col-auto">
                         <button class="btn btn-success" onclick="showAddFacilityForm()">
-                            <i class="fas fa-plus"></i> Add Facility
+                            <i class="fas fa-plus me-1"></i>Add Facility
                         </button>
                     </div>
                 </div>
 
-                <!-- Search and Filter -->
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" id="facility-search"
-                                placeholder="Search facilities by name or location..." onkeyup="filterFacilities()">
+                <!-- Search & Filter -->
+                <div class="card mb-3">
+                    <div class="card-body py-3">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-5">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-search text-muted" style="font-size:0.8rem"></i></span>
+                                    <input type="text" class="form-control" id="facility-search"
+                                        placeholder="Search by name or location…" onkeyup="filterFacilities()">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="capacity-filter" onchange="filterFacilities()">
+                                    <option value="">All Capacities</option>
+                                    <option value="small">Small (1–10)</option>
+                                    <option value="medium">Medium (11–50)</option>
+                                    <option value="large">Large (51+)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="sort-facilities" onchange="sortFacilities()">
+                                    <option value="name">Sort by Name</option>
+                                    <option value="capacity">Sort by Capacity</option>
+                                    <option value="location">Sort by Location</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-select" id="capacity-filter" onchange="filterFacilities()">
-                            <option value="">All Capacities</option>
-                            <option value="small">Small (1-10)</option>
-                            <option value="medium">Medium (11-50)</option>
-                            <option value="large">Large (51+)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-select" id="sort-facilities" onchange="sortFacilities()">
-                            <option value="name">Sort by Name</option>
-                            <option value="capacity">Sort by Capacity</option>
-                            <option value="location">Sort by Location</option>
-                        </select>
                     </div>
                 </div>
 
                 <!-- Add Facility Form -->
-                <div id="add-facility-form" class="card mb-4" style="display: none;">
-                    <div class="card-header">
-                        <h5>Add New Facility</h5>
+                <div id="add-facility-form" class="card mb-4 border-primary" style="display: none;">
+                    <div class="card-header" style="border-bottom-color: rgba(59,91,219,0.2);">
+                        <i class="fas fa-plus-circle"></i> Add New Facility
                     </div>
                     <div class="card-body">
                         <form id="facility-form">
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <label for="facility-name" class="form-label">Name</label>
-                                    <input type="text" class="form-control" id="facility-name" required>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="facility-name" class="form-label fw-semibold small">Facility Name</label>
+                                    <input type="text" class="form-control" id="facility-name" placeholder="e.g. Lecture Hall A" required>
                                 </div>
-                                <div class="col-md-4 mb-3">
-                                    <label for="facility-location" class="form-label">Location</label>
-                                    <input type="text" class="form-control" id="facility-location" required>
+                                <div class="col-md-4">
+                                    <label for="facility-location" class="form-label fw-semibold small">Location</label>
+                                    <input type="text" class="form-control" id="facility-location" placeholder="e.g. Block B, Floor 2" required>
                                 </div>
-                                <div class="col-md-4 mb-3">
-                                    <label for="facility-capacity" class="form-label">Capacity</label>
-                                    <input type="number" class="form-control" id="facility-capacity" min="1" required>
+                                <div class="col-md-4">
+                                    <label for="facility-capacity" class="form-label fw-semibold small">Capacity (people)</label>
+                                    <input type="number" class="form-control" id="facility-capacity" min="1" placeholder="e.g. 50" required>
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Save Facility
-                            </button>
-                            <button type="button" class="btn btn-secondary ms-2" onclick="hideAddFacilityForm()">
-                                Cancel
-                            </button>
+                            <div class="mt-3 d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i>Save Facility
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="hideAddFacilityForm()">
+                                    Cancel
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
 
                 <div id="admin-facilities-list">
-                    <p class="text-muted">Loading facilities...</p>
+                    <p class="text-muted">Loading facilities…</p>
                 </div>
             </div>
 
-            <!-- Admin: Booking Approval Portal -->
+            <!-- ===== ADMIN: APPROVAL PORTAL ===== -->
             <div id="approval-portal-section" class="section" style="display: none;">
                 <div class="row mb-4">
                     <div class="col">
-                        <h2><i class="fas fa-gavel"></i> Booking Approval Portal</h2>
-                        <p class="text-muted">Review and approve pending booking requests</p>
+                        <div class="page-header">
+                            <h2><i class="fas fa-gavel me-2 text-primary" style="font-size:1.2rem"></i>Booking Approval Portal</h2>
+                            <p>Review and approve pending booking requests</p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Approval Statistics -->
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <div class="card bg-warning text-white">
+                <!-- Approval Stats -->
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-md-3">
+                        <div class="card stat-card stat-warning">
                             <div class="card-body text-center">
-                                <h4 id="approval-pending-count">0</h4>
-                                <small>Pending Approval</small>
+                                <div class="stat-number" id="approval-pending-count">0</div>
+                                <div class="stat-label">Pending</div>
+                                <i class="fas fa-clock stat-icon"></i>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="card bg-info text-white">
+                    <div class="col-6 col-md-3">
+                        <div class="card stat-card stat-info">
                             <div class="card-body text-center">
-                                <h4 id="approval-today-count">0</h4>
-                                <small>Today's Bookings</small>
+                                <div class="stat-number" id="approval-today-count">0</div>
+                                <div class="stat-label">Today's Total</div>
+                                <i class="fas fa-calendar-day stat-icon"></i>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="card bg-success text-white">
+                    <div class="col-6 col-md-3">
+                        <div class="card stat-card stat-success">
                             <div class="card-body text-center">
-                                <h4 id="approval-approved-count">0</h4>
-                                <small>Approved Today</small>
+                                <div class="stat-number" id="approval-approved-count">0</div>
+                                <div class="stat-label">Approved Today</div>
+                                <i class="fas fa-check-circle stat-icon"></i>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="card bg-danger text-white">
+                    <div class="col-6 col-md-3">
+                        <div class="card stat-card stat-primary" style="background:linear-gradient(135deg,#c92a2a 0%,#e03131 100%);box-shadow:0 6px 20px rgba(201,42,42,0.35)!important">
                             <div class="card-body text-center">
-                                <h4 id="approval-rejected-count">0</h4>
-                                <small>Rejected Today</small>
+                                <div class="stat-number" id="approval-rejected-count">0</div>
+                                <div class="stat-label">Rejected Today</div>
+                                <i class="fas fa-times-circle stat-icon"></i>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Filters -->
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" id="approval-search"
-                                placeholder="Search pending bookings..." onkeyup="filterPendingBookings()">
+                <div class="card mb-3">
+                    <div class="card-body py-3">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-search text-muted" style="font-size:0.8rem"></i></span>
+                                    <input type="text" class="form-control" id="approval-search"
+                                        placeholder="Search pending bookings…" onkeyup="filterPendingBookings()">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="approval-status-filter" onchange="filterPendingBookings()">
+                                    <option value="">All Status</option>
+                                    <option value="pending">Pending</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="date" class="form-control" id="approval-date-filter"
+                                    onchange="filterPendingBookings()" placeholder="Filter by Date">
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-outline-secondary w-100" onclick="clearApprovalFilters()">
+                                    <i class="fas fa-times me-1"></i>Clear
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-select" id="approval-status-filter" onchange="filterPendingBookings()">
-                            <option value="">All Status</option>
-                            <option value="pending">Pending</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <input type="date" class="form-control" id="approval-date-filter"
-                            onchange="filterPendingBookings()">
-                        <option value="">Filter by Date</option>
-                        </input>
-                    </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-outline-secondary w-100" onclick="clearApprovalFilters()">
-                            <i class="fas fa-times"></i> Clear
-                        </button>
                     </div>
                 </div>
 
-                <!-- Pending Bookings List -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fas fa-clock"></i> Pending Bookings</h5>
-                        <span class="badge bg-warning" id="pending-list-count">0</span>
+                <!-- Pending Bookings -->
+                <div class="card mb-3">
+                    <div class="card-header justify-content-between">
+                        <span><i class="fas fa-clock"></i> Pending Bookings</span>
+                        <span class="badge bg-warning text-dark" id="pending-list-count">0</span>
                     </div>
                     <div class="card-body">
                         <div id="pending-bookings-list">
-                            <p class="text-muted">Loading pending bookings...</p>
+                            <p class="text-muted">Loading pending bookings…</p>
                         </div>
                     </div>
                 </div>
@@ -664,99 +1081,111 @@
                 <!-- Recent Actions -->
                 <div class="card">
                     <div class="card-header">
-                        <h5><i class="fas fa-history"></i> Recent Approval Actions</h5>
+                        <i class="fas fa-history"></i> Recent Approval Actions
                     </div>
                     <div class="card-body">
                         <div id="recent-approvals-list">
-                            <p class="text-muted">No recent actions...</p>
+                            <p class="text-muted small">No recent actions…</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Admin: All Bookings Section -->
+            <!-- ===== ADMIN: ALL BOOKINGS ===== -->
             <div id="all-bookings-section" class="section" style="display: none;">
                 <div class="row mb-4">
                     <div class="col">
-                        <h2><i class="fas fa-calendar-check"></i> All Bookings</h2>
-                        <p class="text-muted">View and manage all bookings in the system</p>
-                    </div>
-                </div>
-
-                <!-- Statistics -->
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <div class="card bg-warning text-white">
-                            <div class="card-body text-center">
-                                <h4 id="pending-count">0</h4>
-                                <small>Pending Approval</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-success text-white">
-                            <div class="card-body text-center">
-                                <h4 id="confirmed-count">0</h4>
-                                <small>Confirmed</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-danger text-white">
-                            <div class="card-body text-center">
-                                <h4 id="cancelled-count">0</h4>
-                                <small>Cancelled</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-info text-white">
-                            <div class="card-body text-center">
-                                <h4 id="total-count">0</h4>
-                                <small>Total Bookings</small>
-                            </div>
+                        <div class="page-header">
+                            <h2><i class="fas fa-calendar-check me-2 text-primary" style="font-size:1.2rem"></i>All Bookings</h2>
+                            <p>View and manage all bookings in the system</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Filters and Search -->
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" id="booking-search" placeholder="Search bookings..."
-                                onkeyup="filterBookings()">
+                <!-- Stats -->
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-md-3">
+                        <div class="card stat-card stat-warning">
+                            <div class="card-body text-center">
+                                <div class="stat-number" id="pending-count">0</div>
+                                <div class="stat-label">Pending</div>
+                                <i class="fas fa-clock stat-icon"></i>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <select class="form-select" id="status-filter" onchange="filterBookings()">
-                            <option value="">All Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="confirmed">Confirmed</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
+                    <div class="col-6 col-md-3">
+                        <div class="card stat-card stat-success">
+                            <div class="card-body text-center">
+                                <div class="stat-number" id="confirmed-count">0</div>
+                                <div class="stat-label">Confirmed</div>
+                                <i class="fas fa-check-circle stat-icon"></i>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <input type="date" class="form-control" id="date-filter" onchange="filterBookings()"
-                            placeholder="Filter by Date">
+                    <div class="col-6 col-md-3">
+                        <div class="card stat-card stat-primary" style="background:linear-gradient(135deg,#c92a2a 0%,#e03131 100%);box-shadow:0 6px 20px rgba(201,42,42,0.35)!important">
+                            <div class="card-body text-center">
+                                <div class="stat-number" id="cancelled-count">0</div>
+                                <div class="stat-label">Cancelled</div>
+                                <i class="fas fa-times-circle stat-icon"></i>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-outline-secondary w-100" onclick="clearBookingFilters()">
-                            <i class="fas fa-times"></i> Clear
-                        </button>
+                    <div class="col-6 col-md-3">
+                        <div class="card stat-card stat-info">
+                            <div class="card-body text-center">
+                                <div class="stat-number" id="total-count">0</div>
+                                <div class="stat-label">Total</div>
+                                <i class="fas fa-list stat-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="card mb-3">
+                    <div class="card-body py-3">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-search text-muted" style="font-size:0.8rem"></i></span>
+                                    <input type="text" class="form-control" id="booking-search"
+                                        placeholder="Search bookings…" onkeyup="filterBookings()">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="status-filter" onchange="filterBookings()">
+                                    <option value="">All Status</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="confirmed">Confirmed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="date" class="form-control" id="date-filter" onchange="filterBookings()">
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-outline-secondary w-100" onclick="clearBookingFilters()">
+                                    <i class="fas fa-times me-1"></i>Clear
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div id="all-bookings-list">
-                    <p class="text-muted">Loading bookings...</p>
+                    <p class="text-muted">Loading bookings…</p>
                 </div>
             </div>
 
         </div>
-    </div>
+        <!-- / container -->
 
-    <!-- Success/Error Messages -->
-    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 5">
+    </div>
+    <!-- / main-app -->
+
+    <!-- Toast alerts -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
         <div id="alert-container"></div>
     </div>
 

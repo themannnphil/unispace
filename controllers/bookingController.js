@@ -1,4 +1,5 @@
 const Booking = require('../models/Booking');
+const User = require('../models/User');
 const { validationResult } = require('express-validator');
 const moment = require('moment');
 
@@ -124,6 +125,22 @@ class BookingController {
     static async cancelBooking(req, res) {
         try {
             const { id } = req.params;
+            const { user_id } = req.body;
+
+            // Verify the requester owns this booking (or is admin)
+            if (user_id) {
+                const target = await Booking.getById(id);
+                if (target && target.user_id !== parseInt(user_id)) {
+                    const requester = await User.getById(user_id);
+                    if (!requester || requester.role !== 'admin') {
+                        return res.status(403).json({
+                            success: false,
+                            message: 'You can only cancel your own bookings'
+                        });
+                    }
+                }
+            }
+
             const booking = await Booking.updateStatus(id, 'cancelled');
 
             if (!booking) {
@@ -263,7 +280,7 @@ class BookingController {
     static async patchBookingStatus(req, res) {
         try {
             const { id } = req.params;
-            const { status } = req.body;
+            const { status, requesting_user_id } = req.body;
 
             const validStatuses = ['confirmed', 'cancelled', 'pending'];
             if (!status || !validStatuses.includes(status)) {
@@ -271,6 +288,28 @@ class BookingController {
                     success: false,
                     message: `Status must be one of: ${validStatuses.join(', ')}`
                 });
+            }
+
+            // Only admins can confirm bookings
+            if (status === 'confirmed') {
+                if (!requesting_user_id) {
+                    return res.status(403).json({ success: false, message: 'Authentication required to confirm bookings' });
+                }
+                const requester = await User.getById(requesting_user_id);
+                if (!requester || requester.role !== 'admin') {
+                    return res.status(403).json({ success: false, message: 'Only administrators can confirm bookings' });
+                }
+            }
+
+            // For cancellations via PATCH, users can only cancel their own bookings
+            if (status === 'cancelled' && requesting_user_id) {
+                const target = await Booking.getById(id);
+                if (target) {
+                    const requester = await User.getById(requesting_user_id);
+                    if ((!requester || requester.role !== 'admin') && target.user_id !== parseInt(requesting_user_id)) {
+                        return res.status(403).json({ success: false, message: 'You can only cancel your own bookings' });
+                    }
+                }
             }
 
             const booking = await Booking.updateStatus(id, status);
