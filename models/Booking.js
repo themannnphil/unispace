@@ -39,8 +39,19 @@ class Booking {
             throw new Error('Booking conflict: Facility is already booked for this time slot');
         }
 
+        // Check if this user already has a booking overlapping this time (any facility)
+        const userConflictCheck = await pool.query(`
+            SELECT id FROM bookings
+            WHERE user_id = $1 AND date = $2 AND status != 'cancelled'
+            AND ((start_time <= $3 AND end_time > $3) OR (start_time < $4 AND end_time >= $4) OR (start_time >= $3 AND end_time <= $4))
+        `, [user_id, date, start_time, end_time]);
+
+        if (userConflictCheck.rows.length > 0) {
+            throw new Error('You already have a booking for this time slot');
+        }
+
         const result = await pool.query(`
-            INSERT INTO bookings (facility_id, user_id, date, start_time, end_time, status) 
+            INSERT INTO bookings (facility_id, user_id, date, start_time, end_time, status)
             VALUES ($1, $2, $3, $4, $5, $6) 
             RETURNING *
         `, [facility_id, user_id, date, start_time, end_time, status]);
